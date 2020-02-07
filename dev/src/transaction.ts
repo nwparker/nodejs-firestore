@@ -451,8 +451,12 @@ export class Transaction {
         await this.commit();
         return result; // Success
       } catch (err) {
-        lastError = err;
-        this._writeBatch._reset();
+        if (isRetryableTransactionError(err)) {
+          lastError = err;
+          this._writeBatch._reset();
+        } else {
+          return Promise.reject(err); // Commit failed w/ non-retryable error
+        }
       }
     }
 

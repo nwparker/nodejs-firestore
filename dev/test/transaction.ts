@@ -473,28 +473,69 @@ describe('failed transactions', () => {
     ).to.eventually.be.rejectedWith('request exception');
   });
 
-  it('retries on commit failure', () => {
-    const userResult = ['failure', 'failure', 'success'];
-    const serverError = new Error('Retryable error');
+  it('retries based on error code', async () => {
+    const expectRetry: {[key: number]: boolean} = {
+      [Status.CANCELLED]: false,
+      [Status.UNKNOWN]: false,
+      [Status.INVALID_ARGUMENT]: false,
+      [Status.DEADLINE_EXCEEDED]: false,
+      [Status.NOT_FOUND]: false,
+      [Status.ALREADY_EXISTS]: false,
+      [Status.PERMISSION_DENIED]: false,
+      [Status.RESOURCE_EXHAUSTED]: false,
+      [Status.FAILED_PRECONDITION]: false,
+      [Status.ABORTED]: true,
+      [Status.OUT_OF_RANGE]: false,
+      [Status.UNIMPLEMENTED]: false,
+      [Status.INTERNAL]: false,
+      [Status.UNAVAILABLE]: false,
+      [Status.DATA_LOSS]: false,
+      [Status.UNAUTHENTICATED]: false,
+    };
 
-    return runTransaction(
-      () => {
-        return Promise.resolve(userResult.shift());
-      },
-      begin('foo1'),
-      commit('foo1', [], serverError),
-      begin('foo2', 'foo1'),
-      commit('foo2', [], serverError),
-      begin('foo3', 'foo2'),
-      commit('foo3')
-    ).then(res => {
-      expect(res).to.equal('success');
-    });
+    for (const errorKey of Object.keys(expectRetry)) {
+      const statusCode = Number(errorKey);
+      if (expectRetry[statusCode]) {
+        const userResult = ['failure', 'success'];
+        const serverError = new GoogleError('Retryable error');
+        serverError.code = statusCode;
+
+        await runTransaction(
+            () => {
+              return Promise.resolve(userResult.shift());
+            },
+            begin('foo1'),
+            commit('foo1', [], serverError),
+            begin('foo2', 'foo1'),
+            commit('foo2')
+        ).then(res => {
+          expect(res).to.equal('success');
+        });
+      } else {
+        const userResult = ['failure'];
+        const serverError = new GoogleError('Non-retryable error');
+        serverError.code = statusCode;
+
+        try {
+          await runTransaction(
+              () => {
+                return Promise.resolve(userResult.shift());
+              },
+              begin('foo1'),
+              commit('foo1', [], serverError),
+          );
+          expect.fail("Transaction should have failed");
+        } catch (e) {
+          expect(e.message).to.equal('Non-retryable error');
+        }
+      }
+    }
   });
 
   it('limits the retry attempts', () => {
     const err = new GoogleError('Server disconnect');
-    err.code = Status.UNAVAILABLE;
+    const serverError = new GoogleError('Retryable error');
+    serverError.code = Status.ABORTED;
 
     return expect(
       runTransaction(
