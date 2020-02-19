@@ -1978,6 +1978,20 @@ export namespace google {
                  * @returns Promise
                  */
                 public listCollectionIds(request: google.firestore.v1.IListCollectionIdsRequest): Promise<google.firestore.v1.ListCollectionIdsResponse>;
+
+                /**
+                 * Calls BatchWrite.
+                 * @param request BatchWriteRequest message or plain object
+                 * @param callback Node-style callback called with the error, if any, and BatchWriteResponse
+                 */
+                public batchWrite(request: google.firestore.v1.IBatchWriteRequest, callback: google.firestore.v1.Firestore.BatchWriteCallback): void;
+
+                /**
+                 * Calls BatchWrite.
+                 * @param request BatchWriteRequest message or plain object
+                 * @returns Promise
+                 */
+                public batchWrite(request: google.firestore.v1.IBatchWriteRequest): Promise<google.firestore.v1.BatchWriteResponse>;
             }
 
             namespace Firestore {
@@ -2072,6 +2086,13 @@ export namespace google {
                  * @param [response] ListCollectionIdsResponse
                  */
                 type ListCollectionIdsCallback = (error: (Error|null), response?: google.firestore.v1.ListCollectionIdsResponse) => void;
+
+                /**
+                 * Callback as used by {@link google.firestore.v1.Firestore#batchWrite}.
+                 * @param error Error, if any
+                 * @param [response] BatchWriteResponse
+                 */
+                type BatchWriteCallback = (error: (Error|null), response?: google.firestore.v1.BatchWriteResponse) => void;
             }
 
             /** Properties of a GetDocumentRequest. */
@@ -3019,6 +3040,58 @@ export namespace google {
                 public nextPageToken: string;
             }
 
+            /** Properties of a BatchWriteRequest. */
+            interface IBatchWriteRequest {
+
+                /** BatchWriteRequest database */
+                database?: (string|null);
+
+                /** BatchWriteRequest writes */
+                writes?: (google.firestore.v1.IWrite[]|null);
+            }
+
+            /** Represents a BatchWriteRequest. */
+            class BatchWriteRequest implements IBatchWriteRequest {
+
+                /**
+                 * Constructs a new BatchWriteRequest.
+                 * @param [properties] Properties to set
+                 */
+                constructor(properties?: google.firestore.v1.IBatchWriteRequest);
+
+                /** BatchWriteRequest database. */
+                public database: string;
+
+                /** BatchWriteRequest writes. */
+                public writes: google.firestore.v1.IWrite[];
+            }
+
+            /** Properties of a BatchWriteResponse. */
+            interface IBatchWriteResponse {
+
+                /** BatchWriteResponse writeResults */
+                writeResults?: (google.firestore.v1.IWriteResult[]|null);
+
+                /** BatchWriteResponse status */
+                status?: (google.rpc.IStatus[]|null);
+            }
+
+            /** Represents a BatchWriteResponse. */
+            class BatchWriteResponse implements IBatchWriteResponse {
+
+                /**
+                 * Constructs a new BatchWriteResponse.
+                 * @param [properties] Properties to set
+                 */
+                constructor(properties?: google.firestore.v1.IBatchWriteResponse);
+
+                /** BatchWriteResponse writeResults. */
+                public writeResults: google.firestore.v1.IWriteResult[];
+
+                /** BatchWriteResponse status. */
+                public status: google.rpc.IStatus[];
+            }
+
             /** Properties of a StructuredQuery. */
             interface IStructuredQuery {
 
@@ -3364,6 +3437,9 @@ export namespace google {
                 /** Write updateMask */
                 updateMask?: (google.firestore.v1.IDocumentMask|null);
 
+                /** Write updateTransforms */
+                updateTransforms?: (google.firestore.v1.DocumentTransform.IFieldTransform[]|null);
+
                 /** Write currentDocument */
                 currentDocument?: (google.firestore.v1.IPrecondition|null);
             }
@@ -3388,6 +3464,9 @@ export namespace google {
 
                 /** Write updateMask. */
                 public updateMask?: (google.firestore.v1.IDocumentMask|null);
+
+                /** Write updateTransforms. */
+                public updateTransforms: google.firestore.v1.DocumentTransform.IFieldTransform[];
 
                 /** Write currentDocument. */
                 public currentDocument?: (google.firestore.v1.IPrecondition|null);
