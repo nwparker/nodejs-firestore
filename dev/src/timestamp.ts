@@ -26,6 +26,15 @@ import api = google.firestore.v1;
  */
 const MS_TO_NANOS = 1000000;
 
+/*!
+ * The minimum legal value for the "seconds" property of a Timestamp object.
+ *
+ * This value corresponds to 0001-01-01T00:00:00Z.
+ *
+ * @type {number}
+ */
+const MIN_SECONDS = -62135596800;
+
 /**
  * A Timestamp represents a point in time independent of any time zone or
  * calendar, represented as seconds and fractions of seconds at nanosecond
@@ -247,5 +256,26 @@ export class Timestamp {
     }
 
     return {timestampValue: timestamp};
+  }
+
+  /**
+   * Converts this object to a primitive string and returns it.
+   *
+   * Overriding this method allows Timestamp objects to be compared in JavaScript using the
+   * arithmetic comparison operators, such as < and >.
+   * https://github.com/firebase/firebase-js-sdk/issues/2632
+   *
+   * This method returns a string of the form <seconds>.<nanoseconds> where <seconds> is translated
+   * to have a non-negative value and both <seconds> and <nanoseconds> are left-padded with zeroes
+   * to be a consistent length. Strings with this format then have a lexiographical ordering that
+   * matches the relative ordering of the Timestamp objects whose valueOf() method returned them.
+   * The <seconds> translation is done to avoid having a leading negative sign (i.e. a leading '-'
+   * character) in its string representation, which would affect its lexiographical ordering.
+   */
+  valueOf(): string {
+    const adjustedSeconds = this.seconds - MIN_SECONDS;
+    const formattedSeconds = String(adjustedSeconds).padStart(12, '0');
+    const formattedNanoseconds = String(this.nanoseconds).padStart(9, '0');
+    return formattedSeconds + '.' + formattedNanoseconds;
   }
 }
